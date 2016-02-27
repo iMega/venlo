@@ -15,7 +15,10 @@ TELEPORT_MAILER_PASS ?=
 TELEPORT_INVITER ?= imega/malmo
 TELEPORT_INVITER_PORT ?= -p 8180:80
 
-start: teleport_data teleport_mailer teleport_inviter
+TELEPORT_ACCEPTOR ?= imega/bremen
+TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
+
+start: teleport_data teleport_mailer teleport_inviter teleport_acceptor
 
 teleport_data:
 	@docker run -d --name teleport_data --restart=always -v $(CURDIR)/data:/data $(TELEPORT_DATA)
@@ -41,3 +44,11 @@ teleport_inviter: discovery_data
 		--env HOST_PRIMARY=$(HOST_PRIMARY) \
 		$(TELEPORT_INVITER_PORT) \
 		$(TELEPORT_INVITER)
+
+teleport_acceptor: discovery_data
+	@docker run -d --name teleport_acceptor --restart=always \
+		--env REDIS_IP=$(TELEPORT_DATA_IP) \
+		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		-v $(STORAGE_FOLDER):/data \
+		$(TELEPORT_ACCEPTOR_PORT) \
+		$(TELEPORT_ACCEPTOR)
