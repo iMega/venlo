@@ -9,7 +9,7 @@ checkConnectToData() {
     if [ $TELEPORT_DATA_IP != ${IP[1]} ]; then
         docker stop $1
         docker rm -fv $1
-        make $1
+        make $1 `pwd`/../../
     fi
 }
 
