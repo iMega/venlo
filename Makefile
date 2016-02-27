@@ -18,6 +18,9 @@ TELEPORT_INVITER_PORT ?= -p 8180:80
 TELEPORT_ACCEPTOR ?= imega/bremen
 TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
 
+TELEPORT_SETTINGS ?= imega/lahti
+TELEPORT_SETTINGS_PORT ?= -p 8184:80
+
 start: teleport_data teleport_mailer teleport_inviter teleport_acceptor
 
 teleport_data:
@@ -49,6 +52,14 @@ teleport_acceptor: discovery_data
 	@docker run -d --name teleport_acceptor --restart=always \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
-		-v $(STORAGE_FOLDER):/data \
+		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		$(TELEPORT_ACCEPTOR)
+
+teleport_settings: discovery_data
+	@docker run -d --name teleport_settings --restart=always \
+		--env REDIS_IP=$(TELEPORT_DATA_IP) \
+		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		-v $(CURDIR)/data:/data \
+		$(TELEPORT_SETTINGS_PORT) \
+		$(TELEPORT_SETTINGS)

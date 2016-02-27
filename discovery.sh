@@ -16,3 +16,5 @@ checkConnectToData() {
 TELEPORT_DATA_IP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' teleport_data)
 
 checkConnectToData teleport_inviter
+checkConnectToData teleport_acceptor
+checkConnectToData teleport_settings
