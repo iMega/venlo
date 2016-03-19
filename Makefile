@@ -1,4 +1,4 @@
-include vars.mk
+#include vars.mk
 
 HOST_CDN ?=
 HOST_PRIMARY ?=
@@ -20,6 +20,8 @@ TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
 
 TELEPORT_SETTINGS ?= imega/lahti
 TELEPORT_SETTINGS_PORT ?= -p 8184:80
+
+SERVICES = lahti narvik malmo bremen
 
 start: teleport_data teleport_mailer teleport_inviter teleport_acceptor
 
@@ -63,3 +65,13 @@ teleport_settings: discovery_data
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_SETTINGS_PORT) \
 		$(TELEPORT_SETTINGS)
+
+deploy: $(SERVICES)
+
+$(SERVICES):
+	@-mkdir src
+	@cd src;curl -o $@.zip -0L https://codeload.github.com/imega/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
+	$(MAKE) build --directory=$(CURDIR)/src/$@
+
+discovery:
+	@sh discovery.sh
