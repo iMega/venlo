@@ -1,4 +1,4 @@
-#include vars.mk
+include vars.mk
 
 HOST_CDN ?=
 HOST_PRIMARY ?=
@@ -21,9 +21,12 @@ TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
 TELEPORT_SETTINGS ?= imega/lahti
 TELEPORT_SETTINGS_PORT ?= -p 8184:80
 
-SERVICES = lahti narvik malmo bremen
+TELEPORT_STORAGE ?= imega/york
+TELEPORT_STORAGE_PORT ?= -p 8185:80
 
-start: teleport_data teleport_mailer teleport_inviter teleport_acceptor
+SERVICES = lahti narvik malmo bremen york
+
+start: teleport_data teleport_mailer teleport_inviter teleport_acceptor teleport_storage
 
 teleport_data:
 	@docker run -d --name teleport_data --restart=always -v $(CURDIR)/data:/data $(TELEPORT_DATA)
@@ -65,6 +68,14 @@ teleport_settings: discovery_data
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_SETTINGS_PORT) \
 		$(TELEPORT_SETTINGS)
+
+teleport_storage:
+	@docker run -d \
+		--name teleport_storage \
+		--restart=always \
+		$(TELEPORT_STORAGE_PORT) \
+		-v $(CURDIR)/data:/data \
+		$(TELEPORT_STORAGE)
 
 deploy: $(SERVICES)
 

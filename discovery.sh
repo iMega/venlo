@@ -6,7 +6,7 @@
 checkConnectToData() {
     DATA_IP=$(docker inspect --format '{{ index (index .Config.Env) 0 }}' $1)
     IFS='=' read -ra IP <<< "$DATA_IP"
-    if [ $TELEPORT_DATA_IP != ${IP[1]} ]; then
+    if [ "$TELEPORT_DATA_IP" != "${IP[1]}" ]; then
         docker stop $1
         docker rm -fv $1
         make $1 -I `pwd`/../../
