@@ -24,9 +24,17 @@ TELEPORT_SETTINGS_PORT ?= -p 8184:80
 TELEPORT_STORAGE ?= imega/york
 TELEPORT_STORAGE_PORT ?= -p 8185:80
 
-SERVICES = lahti narvik malmo bremen york
+TELEPORT_FILEMAN ?= imega/tokio
+TELEPORT_EXTRACTOR ?= imega/vigo
 
-start: teleport_data teleport_mailer teleport_inviter teleport_acceptor teleport_storage
+SERVICES = lahti narvik malmo bremen york tokio vigo
+
+start: teleport_data \
+	teleport_fileman \
+	teleport_mailer \
+	teleport_inviter \
+	teleport_acceptor \
+	teleport_storage
 
 teleport_data:
 	@docker run -d --name teleport_data --restart=always -v $(CURDIR)/data:/data $(TELEPORT_DATA)
@@ -69,6 +77,13 @@ teleport_settings: discovery_data
 		$(TELEPORT_SETTINGS_PORT) \
 		$(TELEPORT_SETTINGS)
 
+teleport_fileman:
+	@docker run -d \
+		--name teleport_fileman \
+		--restart=always \
+		-v $(CURDIR)/data:/data \
+		$(TELEPORT_FILEMAN)
+
 teleport_storage:
 	@docker run -d \
 		--name teleport_storage \
@@ -81,7 +96,7 @@ deploy: $(SERVICES)
 
 $(SERVICES):
 	@-mkdir src
-	@cd src;curl -o $@.zip -0L https://codeload.github.com/imega/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
+	@cd src;curl -o $@.zip -0L https://codeload.github.com/imega-teleport/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
 	$(MAKE) build --directory=$(CURDIR)/src/$@
 
 discovery:
