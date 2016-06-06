@@ -29,15 +29,30 @@ TELEPORT_EXTRACTOR ?= imega/vigo
 
 SERVICES = lahti narvik malmo bremen york tokio vigo
 
-start: teleport_data \
-	teleport_fileman \
-	teleport_mailer \
-	teleport_inviter \
-	teleport_acceptor \
-	teleport_storage
+start: build/containers/teleport_data \
+	build/containers/teleport_fileman \
+	build/containers/teleport_mailer \
+	build/containers/teleport_inviter \
+	build/containers/teleport_acceptor \
+	build/containers/teleport_storage
 
-teleport_data:
+get_containers:
+	$(eval CONTAINERS := $(subst build/containers/,,$(shell find build/containers -type f)))
+
+stop: get_containers
+	@-docker stop $(CONTAINERS)
+
+clean: stop
+	@-docker rm -fv $(CONTAINERS)
+	@rm -rf build/containers/*
+
+destroy: clean
+	@rm -rf $(CURDIR)/src
+
+build/containers/teleport_data:
+	@mkdir -p $(shell dirname $@)
 	@docker run -d --name teleport_data --restart=always -v $(CURDIR)/data:/data $(TELEPORT_DATA)
+	@touch $@
 
 discovery_data:
 	@while [ "`docker inspect -f {{.State.Running}} teleport_data`" != "true" ]; do \
@@ -45,14 +60,17 @@ discovery_data:
 	done
 	$(eval TELEPORT_DATA_IP = $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' teleport_data))
 
-teleport_mailer:
+build/containers/teleport_mailer:
+	@mkdir -p $(shell dirname $@)
 	@docker run -d --name teleport_mailer --restart=always \
 		$(TELEPORT_MAILER_PORT) \
 		--env SMTP_USER=$(TELEPORT_MAILER_USER) \
 		--env SMTP_PASS=$(TELEPORT_MAILER_PASS) \
 		$(TELEPORT_MAILER)
+	@touch $@
 
-teleport_inviter: discovery_data
+build/containers/teleport_inviter: discovery_data
+	@mkdir -p $(shell dirname $@)
 	@docker run -d --name teleport_inviter --restart=always \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
@@ -60,45 +78,61 @@ teleport_inviter: discovery_data
 		--env HOST_PRIMARY=$(HOST_PRIMARY) \
 		$(TELEPORT_INVITER_PORT) \
 		$(TELEPORT_INVITER)
+	@touch $@
 
-teleport_acceptor: discovery_data
+build/containers/teleport_acceptor: discovery_data
+	@mkdir -p $(shell dirname $@)
 	@docker run -d --name teleport_acceptor --restart=always \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		$(TELEPORT_ACCEPTOR)
+	@touch $@
 
-teleport_settings: discovery_data
+build/containers/teleport_settings: discovery_data
+	@mkdir -p $(shell dirname $@)
 	@docker run -d --name teleport_settings --restart=always \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_SETTINGS_PORT) \
 		$(TELEPORT_SETTINGS)
+	@touch $@
 
-teleport_fileman:
+build/containers/teleport_fileman:
+	@mkdir -p $(shell dirname $@)
 	@docker run -d \
 		--name teleport_fileman \
 		--restart=always \
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_FILEMAN)
+	@touch $@
 
-teleport_extractor:
+build/containers/teleport_extractor:
+	@mkdir -p $(shell dirname $@)
 	@docker run -d \
 		--name teleport_extractor \
 		--restart=always \
 		$(TELEPORT_EXTRACTOR)
+	@touch $@
 
-teleport_storage:
+build/containers/teleport_storage:
+	@mkdir -p $(shell dirname $@)
+	@mkdir -p $(CURDIR)/data/zip
+	@mkdir -p $(CURDIR)/data/unzip
 	@docker run -d \
 		--name teleport_storage \
 		--restart=always \
 		$(TELEPORT_STORAGE_PORT) \
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_STORAGE)
+	@touch $@
 
-deploy: $(SERVICES)
+build_dir:
+	@-mkdir -p $(CURDIR)/build
+
+deploy: build_dir $(SERVICES)
 
 $(SERVICES):
 	@-mkdir src
