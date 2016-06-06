@@ -84,6 +84,12 @@ teleport_fileman:
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_FILEMAN)
 
+teleport_extractor:
+	@docker run -d \
+		--name teleport_extractor \
+		--restart=always \
+		$(TELEPORT_EXTRACTOR)
+
 teleport_storage:
 	@docker run -d \
 		--name teleport_storage \
