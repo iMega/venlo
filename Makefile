@@ -85,6 +85,7 @@ build/containers/teleport_acceptor: discovery_data
 	@docker run -d --name teleport_acceptor --restart=always \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		--link teleport_fileman:fileman \
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		$(TELEPORT_ACCEPTOR)
