@@ -102,7 +102,7 @@ deploy: $(SERVICES)
 
 $(SERVICES):
 	@-mkdir src
-	@cd src;curl -o $@.zip -0L https://codeload.github.com/imega-teleport/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
+	@cd src;curl -s -o $@.zip -0L https://codeload.github.com/imega-teleport/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
 	$(MAKE) build --directory=$(CURDIR)/src/$@
 
 discovery:
