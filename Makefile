@@ -31,6 +31,7 @@ SERVICES = lahti narvik malmo bremen york tokio vigo
 
 start: build/containers/teleport_data \
 	build/containers/teleport_fileman \
+	build/containers/teleport_extractor \
 	build/containers/teleport_mailer \
 	build/containers/teleport_inviter \
 	build/containers/teleport_acceptor \
@@ -115,6 +116,7 @@ build/containers/teleport_extractor:
 	@docker run -d \
 		--name teleport_extractor \
 		--restart=always \
+		--link teleport_fileman:fileman \
 		$(TELEPORT_EXTRACTOR)
 	@touch $@
 
