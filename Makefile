@@ -119,6 +119,11 @@ build/containers/teleport_extractor:
 		--link teleport_fileman:fileman \
 		$(TELEPORT_EXTRACTOR)
 	@touch $@
+	@while [ "`docker inspect -f {{.State.Running}} teleport_extractor`" != "true" ]; do \
+		@echo "wait teleport_extractor"; sleep 0.3; \
+	done
+	$(eval IP := $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' teleport_extractor))
+	@docker exec teleport_fileman sh -c 'echo -e "$(IP)\textractor" >> /etc/hosts'
 
 build/containers/teleport_storage:
 	@mkdir -p $(shell dirname $@)
