@@ -35,7 +35,8 @@ start: build/containers/teleport_data \
 	build/containers/teleport_mailer \
 	build/containers/teleport_inviter \
 	build/containers/teleport_acceptor \
-	build/containers/teleport_storage
+	build/containers/teleport_storage \
+	discovery_extractor
 
 get_containers:
 	$(eval CONTAINERS := $(subst build/containers/,,$(shell find build/containers -type f)))
@@ -119,6 +120,8 @@ build/containers/teleport_extractor:
 		--link teleport_fileman:fileman \
 		$(TELEPORT_EXTRACTOR)
 	@touch $@
+
+discovery_extractor:
 	@while [ "`docker inspect -f {{.State.Running}} teleport_extractor`" != "true" ]; do \
 		@echo "wait teleport_extractor"; sleep 0.3; \
 	done
