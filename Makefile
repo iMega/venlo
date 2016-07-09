@@ -26,17 +26,19 @@ TELEPORT_STORAGE_PORT ?= -p 8185:80
 
 TELEPORT_FILEMAN ?= imegateleport/tokio
 TELEPORT_EXTRACTOR ?= imegateleport/vigo
+TELEPORT_PARSER ?= imegateleport/oslo
 
-SERVICES = lahti narvik malmo bremen york tokio vigo
-
-start: build/containers/teleport_data \
+start: work_dirs \
+	build/containers/teleport_data \
 	build/containers/teleport_fileman \
 	build/containers/teleport_extractor \
 	build/containers/teleport_mailer \
 	build/containers/teleport_inviter \
 	build/containers/teleport_acceptor \
 	build/containers/teleport_storage \
-	discovery_extractor
+	build/containers/teleport_parser \
+	discovery_extractor \
+	discovery_parser
 
 get_containers:
 	$(eval CONTAINERS := $(subst build/containers/,,$(shell find build/containers -type f)))
@@ -47,9 +49,6 @@ stop: get_containers
 clean: stop
 	@-docker rm -fv $(CONTAINERS)
 	@rm -rf build/containers/*
-
-destroy: clean
-	@rm -rf $(CURDIR)/src
 
 build/containers/teleport_data:
 	@mkdir -p $(shell dirname $@)
@@ -121,6 +120,26 @@ build/containers/teleport_extractor:
 		$(TELEPORT_EXTRACTOR)
 	@touch $@
 
+build/containers/teleport_storage:
+	@mkdir -p $(shell dirname $@)
+	@docker run -d \
+		--name teleport_storage \
+		--restart=always \
+		$(TELEPORT_STORAGE_PORT) \
+		-v $(CURDIR)/data/storage:/data \
+		$(TELEPORT_STORAGE)
+	@touch $@
+
+build/containers/teleport_parser:
+	@mkdir -p $(shell dirname $@)
+	@docker run -d \
+		--name teleport_parser \
+		--restart=always \
+		-v $(CURDIR)/data/unzip:/data \
+		--link teleport_fileman:fileman \
+		$(TELEPORT_PARSER)
+	@touch $@
+
 discovery_extractor:
 	@while [ "`docker inspect -f {{.State.Running}} teleport_extractor`" != "true" ]; do \
 		@echo "wait teleport_extractor"; sleep 0.3; \
@@ -128,20 +147,15 @@ discovery_extractor:
 	$(eval IP := $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' teleport_extractor))
 	@docker exec teleport_fileman sh -c 'echo -e "$(IP)\textractor" >> /etc/hosts'
 
-build/containers/teleport_storage:
-	@mkdir -p $(shell dirname $@)
-	@mkdir -p $(CURDIR)/data/zip
-	@mkdir -p $(CURDIR)/data/unzip
-	@docker run -d \
-		--name teleport_storage \
-		--restart=always \
-		$(TELEPORT_STORAGE_PORT) \
-		-v $(CURDIR)/data:/data \
-		$(TELEPORT_STORAGE)
-	@touch $@
+discovery_parser:
+	@while [ "`docker inspect -f {{.State.Running}} teleport_parser`" != "true" ]; do \
+		@echo "wait teleport_parser"; sleep 0.3; \
+	done
+	$(eval IP := $(shell docker inspect --format '{{ .NetworkSettings.IPAddress }}' teleport_parser))
+	@docker exec teleport_fileman sh -c 'echo -e "$(IP)\tparser" >> /etc/hosts'
 
-build_dir:
-	@-mkdir -p $(CURDIR)/build
+work_dirs:
+	@-mkdir -p $(CURDIR)/build $(CURDIR)/data/zip $(CURDIR)/data/parse $(CURDIR)/data/storage
 
 discovery:
 	@sh discovery.sh
