@@ -7,25 +7,25 @@ TELEPORT_DATA ?= imega/redis:1.0.0
 TELEPORT_DATA_PORT ?= 6379
 TELEPORT_DATA_IP ?=
 
-TELEPORT_MAILER ?= imega/narvik
+TELEPORT_MAILER ?= imegateleport/narvik
 TELEPORT_MAILER_PORT ?= -p 8181:9000
 TELEPORT_MAILER_USER ?=
 TELEPORT_MAILER_PASS ?=
 
-TELEPORT_INVITER ?= imega/malmo
+TELEPORT_INVITER ?= imegateleport/malmo
 TELEPORT_INVITER_PORT ?= -p 8180:80
 
-TELEPORT_ACCEPTOR ?= imega/bremen
+TELEPORT_ACCEPTOR ?= imegateleport/bremen
 TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
 
-TELEPORT_SETTINGS ?= imega/lahti
+TELEPORT_SETTINGS ?= imegateleport/lahti
 TELEPORT_SETTINGS_PORT ?= -p 8184:80
 
-TELEPORT_STORAGE ?= imega/york
+TELEPORT_STORAGE ?= imegateleport/york
 TELEPORT_STORAGE_PORT ?= -p 8185:80
 
-TELEPORT_FILEMAN ?= imega/tokio
-TELEPORT_EXTRACTOR ?= imega/vigo
+TELEPORT_FILEMAN ?= imegateleport/tokio
+TELEPORT_EXTRACTOR ?= imegateleport/vigo
 
 SERVICES = lahti narvik malmo bremen york tokio vigo
 
@@ -142,13 +142,6 @@ build/containers/teleport_storage:
 
 build_dir:
 	@-mkdir -p $(CURDIR)/build
-
-deploy: build_dir $(SERVICES)
-
-$(SERVICES):
-	@-mkdir src
-	@cd src;curl -s -o $@.zip -0L https://codeload.github.com/imega-teleport/$@/zip/master;unzip $@.zip;mv $@-master $@;rm $@.zip
-	$(MAKE) build --directory=$(CURDIR)/src/$@
 
 discovery:
 	@sh discovery.sh
