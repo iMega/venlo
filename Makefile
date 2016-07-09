@@ -135,7 +135,7 @@ build/containers/teleport_parser:
 	@docker run -d \
 		--name teleport_parser \
 		--restart=always \
-		-v $(CURDIR)/data/unzip:/data \
+		-v $(CURDIR)/data/parse:/data \
 		--link teleport_fileman:fileman \
 		$(TELEPORT_PARSER)
 	@touch $@
@@ -156,6 +156,7 @@ discovery_parser:
 
 work_dirs:
 	@-mkdir -p $(CURDIR)/build $(CURDIR)/data/zip $(CURDIR)/data/parse $(CURDIR)/data/storage
+	@-chmod -R 777 $(CURDIR)/data
 
 discovery:
 	@sh discovery.sh
