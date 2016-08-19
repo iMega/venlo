@@ -125,6 +125,7 @@ build/containers/teleport_storage:
 	@docker run -d \
 		--name teleport_storage \
 		--restart=always \
+		--link teleport_data:teleport_data \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
 		$(TELEPORT_STORAGE_PORT) \
