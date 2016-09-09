@@ -159,6 +159,7 @@ discovery_parser:
 
 work_dirs:
 	@-mkdir -p $(CURDIR)/build $(CURDIR)/data/zip $(CURDIR)/data/parse $(CURDIR)/data/storage
+	@cp -r $(CURDIR)/sql/* $(CURDIR)/data/storage/
 	@-chmod -R 777 $(CURDIR)/data
 
 discovery:
