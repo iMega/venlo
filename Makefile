@@ -162,5 +162,8 @@ work_dirs:
 	@cp -r $(CURDIR)/sql/* $(CURDIR)/data/storage/
 	@-chmod -R 777 $(CURDIR)/data
 
+update_custom:
+	@cp -rf $(CURDIR)/sql/* $(CURDIR)/data/storage/
+
 discovery:
 	@sh discovery.sh
