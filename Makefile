@@ -32,7 +32,7 @@ $(CON_DIR)/teleport_data:
 
 $(CON_DIR)/teleport_db:
 	@mkdir -p $(shell dirname $@)
-	@docker run -d --name "teleport_db" imega/mysql
+	@docker run -d --name "teleport_db" -v $(CURDIR)/conf.d/mysql:/etc/mysql/conf.d imega/mysql
 	@docker run --rm \
 		-v $(CURDIR)/sql:/sql \
 		--link teleport_db:s \
