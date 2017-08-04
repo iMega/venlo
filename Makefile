@@ -1,9 +1,10 @@
-#include vars.mk
+include vars.mk
 
-TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
+HOST_CDN ?=
+HOST_PRIMARY ?=
 
 CON_DIR = build/containers
-SRV = data db fileman acceptor storage
+SRV = data db fileman acceptor storage inviter mailer
 SRV_OBJ = $(addprefix $(CON_DIR)/teleport_,$(SRV))
 
 start: data_dir $(SRV_OBJ)
@@ -27,31 +28,34 @@ discovery_data:
 
 $(CON_DIR)/teleport_data:
 	@mkdir -p $(shell dirname $@)
-	@docker run -d --name teleport_data -v $(CURDIR)/data:/data imega/redis
 	@touch $@
+	@docker run -d --name teleport_data -v $(CURDIR)/data:/data imega/redis
 
 $(CON_DIR)/teleport_db:
 	@mkdir -p $(shell dirname $@)
+	@touch $@
 	@docker run -d --name "teleport_db" -v $(CURDIR)/conf.d/mysql:/etc/mysql/conf.d imega/mysql
 	@docker run --rm \
 		-v $(CURDIR)/sql:/sql \
 		--link teleport_db:s \
 		imega/mysql-client \
 		mysql --host=s -e "source /sql/schema.sql"
-	@touch $@
 
 $(CON_DIR)/teleport_fileman:
 	@mkdir -p $(shell dirname $@)
+	@touch $@
 	@docker run -d \
 		--name teleport_fileman \
 		--link teleport_db:server_db \
 		-e DB_HOST=server_db:3306 \
 		-v $(CURDIR)/data:/data \
 		imegateleport/fileman
-	@touch $@
+
+TELEPORT_ACCEPTOR_PORT ?= -p 8183:80
 
 $(CON_DIR)/teleport_acceptor: discovery_data
 	@mkdir -p $(shell dirname $@)
+	@touch $@
 	@docker run -d --name teleport_acceptor \
 		--env REDIS_IP=$(TELEPORT_DATA_IP) \
 		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
@@ -60,10 +64,12 @@ $(CON_DIR)/teleport_acceptor: discovery_data
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		imegateleport/bremen
-	@touch $@
+
+TELEPORT_STORAGE_PORT ?= -p 8185:80
 
 $(CON_DIR)/teleport_storage: discovery_data
 	@mkdir -p $(shell dirname $@)
+	@touch $@
 	@docker run -d \
 		--name teleport_storage \
 		--link teleport_data:teleport_data \
@@ -72,7 +78,32 @@ $(CON_DIR)/teleport_storage: discovery_data
 		$(TELEPORT_STORAGE_PORT) \
 		-v $(CURDIR)/data/storage:/data \
 		imegateleport/york
+
+TELEPORT_INVITER_PORT ?= -p 8180:80
+
+$(CON_DIR)/teleport_inviter: discovery_data
+	@mkdir -p $(shell dirname $@)
 	@touch $@
+	@docker run -d --name teleport_inviter \
+		--env REDIS_IP=$(TELEPORT_DATA_IP) \
+		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		--env HOST_CDN=$(HOST_CDN) \
+		--env HOST_PRIMARY=$(HOST_PRIMARY) \
+		$(TELEPORT_INVITER_PORT) \
+		imegateleport/malmo
+
+TELEPORT_MAILER_PORT ?= -p 8181:9000
+TELEPORT_MAILER_USER ?=
+TELEPORT_MAILER_PASS ?=
+
+$(CON_DIR)/teleport_mailer:
+	@mkdir -p $(shell dirname $@)
+	@touch $@
+	@docker run -d --name teleport_mailer \
+		$(TELEPORT_MAILER_PORT) \
+		--env SMTP_USER=$(TELEPORT_MAILER_USER) \
+		--env SMTP_PASS=$(TELEPORT_MAILER_PASS) \
+		imegateleport/narvik
 
 get_containers:
 	$(eval CONTAINERS := $(subst $(CON_DIR)/,,$(shell find $(CON_DIR) -type f)))
