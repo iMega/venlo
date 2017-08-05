@@ -20,6 +20,8 @@ clean: stop
 	@-rm -rf $(CURDIR)/data/parse/*
 	@-rm -rf $(CURDIR)/data/storage/*
 
+TELEPORT_DATA_PORT ?= 6379
+
 discovery_data:
 	@while [ "`docker inspect -f {{.State.Running}} teleport_data`" != "true" ]; do \
 		echo "wait db"; sleep 0.3; \
