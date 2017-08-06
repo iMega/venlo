@@ -43,6 +43,20 @@ $(CON_DIR)/teleport_db:
 		imega/mysql-client \
 		mysql --host=s -e "source /sql/schema.sql"
 
+TELEPORT_STORAGE_PORT ?= -p 8185:80
+
+$(CON_DIR)/teleport_storage: discovery_data
+	@mkdir -p $(shell dirname $@)
+	@touch $@
+	@docker run -d \
+		--name teleport_storage \
+		--link teleport_data:teleport_data \
+		--env REDIS_IP=$(TELEPORT_DATA_IP) \
+		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		$(TELEPORT_STORAGE_PORT) \
+		-v $(CURDIR)/data/storage:/data \
+		imegateleport/york
+
 $(CON_DIR)/teleport_fileman:
 	@mkdir -p $(shell dirname $@)
 	@touch $@
@@ -67,20 +81,6 @@ $(CON_DIR)/teleport_acceptor: discovery_data
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		imegateleport/bremen
-
-TELEPORT_STORAGE_PORT ?= -p 8185:80
-
-$(CON_DIR)/teleport_storage: discovery_data
-	@mkdir -p $(shell dirname $@)
-	@touch $@
-	@docker run -d \
-		--name teleport_storage \
-		--link teleport_data:teleport_data \
-		--env REDIS_IP=$(TELEPORT_DATA_IP) \
-		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
-		$(TELEPORT_STORAGE_PORT) \
-		-v $(CURDIR)/data/storage:/data \
-		imegateleport/york
 
 TELEPORT_INVITER_PORT ?= -p 8180:80
 
