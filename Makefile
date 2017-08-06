@@ -49,6 +49,7 @@ $(CON_DIR)/teleport_fileman:
 	@docker run -d \
 		--name teleport_fileman \
 		--link teleport_db:server_db \
+		--link teleport_storage:storage \
 		-e DB_HOST=server_db:3306 \
 		-v $(CURDIR)/data:/data \
 		imegateleport/fileman
