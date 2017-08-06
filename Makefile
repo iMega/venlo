@@ -4,7 +4,7 @@ HOST_CDN ?=
 HOST_PRIMARY ?=
 
 CON_DIR = build/containers
-SRV = data db fileman acceptor storage inviter mailer
+SRV = data db storage fileman acceptor inviter mailer
 SRV_OBJ = $(addprefix $(CON_DIR)/teleport_,$(SRV))
 
 start: data_dir $(SRV_OBJ)
