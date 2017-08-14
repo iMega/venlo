@@ -4,7 +4,7 @@ HOST_CDN ?=
 HOST_PRIMARY ?=
 
 CON_DIR = build/containers
-SRV = data db fileman acceptor storage inviter mailer
+SRV = data db storage fileman acceptor inviter mailer
 SRV_OBJ = $(addprefix $(CON_DIR)/teleport_,$(SRV))
 
 start: data_dir $(SRV_OBJ)
@@ -19,6 +19,8 @@ clean: stop
 	@-rm -rf $(CURDIR)/data/unzip/*
 	@-rm -rf $(CURDIR)/data/parse/*
 	@-rm -rf $(CURDIR)/data/storage/*
+
+TELEPORT_DATA_PORT ?= 6379
 
 discovery_data:
 	@while [ "`docker inspect -f {{.State.Running}} teleport_data`" != "true" ]; do \
@@ -41,12 +43,27 @@ $(CON_DIR)/teleport_db:
 		imega/mysql-client \
 		mysql --host=s -e "source /sql/schema.sql"
 
+TELEPORT_STORAGE_PORT ?= -p 8185:80
+
+$(CON_DIR)/teleport_storage: discovery_data
+	@mkdir -p $(shell dirname $@)
+	@touch $@
+	@docker run -d \
+		--name teleport_storage \
+		--link teleport_data:teleport_data \
+		--env REDIS_IP=$(TELEPORT_DATA_IP) \
+		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
+		$(TELEPORT_STORAGE_PORT) \
+		-v $(CURDIR)/data/storage:/data \
+		imegateleport/york
+
 $(CON_DIR)/teleport_fileman:
 	@mkdir -p $(shell dirname $@)
 	@touch $@
 	@docker run -d \
 		--name teleport_fileman \
 		--link teleport_db:server_db \
+		--link teleport_storage:storage \
 		-e DB_HOST=server_db:3306 \
 		-v $(CURDIR)/data:/data \
 		imegateleport/fileman
@@ -64,20 +81,6 @@ $(CON_DIR)/teleport_acceptor: discovery_data
 		-v $(CURDIR)/data:/data \
 		$(TELEPORT_ACCEPTOR_PORT) \
 		imegateleport/bremen
-
-TELEPORT_STORAGE_PORT ?= -p 8185:80
-
-$(CON_DIR)/teleport_storage: discovery_data
-	@mkdir -p $(shell dirname $@)
-	@touch $@
-	@docker run -d \
-		--name teleport_storage \
-		--link teleport_data:teleport_data \
-		--env REDIS_IP=$(TELEPORT_DATA_IP) \
-		--env REDIS_PORT=$(TELEPORT_DATA_PORT) \
-		$(TELEPORT_STORAGE_PORT) \
-		-v $(CURDIR)/data/storage:/data \
-		imegateleport/york
 
 TELEPORT_INVITER_PORT ?= -p 8180:80
 
