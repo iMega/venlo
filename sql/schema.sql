@@ -73,8 +73,8 @@ CREATE TABLE products_images (
 
 DROP TABLE IF EXISTS products_groups;
 CREATE TABLE products_groups (
-  parent_id VARCHAR(80) NOT NULL,
-  id        VARCHAR(80) NOT NULL,
+  product_id VARCHAR(80) NOT NULL,
+  group_id   VARCHAR(80) NOT NULL,
   KEY record(parent_id)
 );
 
