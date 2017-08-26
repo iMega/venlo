@@ -75,7 +75,7 @@ DROP TABLE IF EXISTS products_groups;
 CREATE TABLE products_groups (
   product_id VARCHAR(80) NOT NULL,
   group_id   VARCHAR(80) NOT NULL,
-  KEY record(parent_id)
+  KEY record(product_id)
 );
 
 DROP TABLE IF EXISTS products_contractor;
